@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LedgerLine — Banking Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between sticky top-0 z-30">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                <i class="fa-solid fa-scale-balanced text-lg"></i>
+            </div>
+            <div>
+                <span class="text-xl font-bold tracking-tight text-white">LedgerLine</span>
+                <span class="ml-2 text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded border border-slate-700">Account Portal</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="text-right hidden sm:block">
+                <div id="navUserName" class="text-sm font-semibold text-white">User</div>
+                <div id="navUserRole" class="text-xs text-blue-400 font-mono">Role</div>
+            </div>
+            <button onclick="logout()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-slate-300 transition">
+                <i class="fa-solid fa-arrow-right-from-bracket mr-1"></i> Sign Out
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="max-w-6xl mx-auto p-6 space-y-6">
+        <!-- Notification Banner -->
+        <div id="toast" class="hidden p-4 rounded-xl text-sm flex items-center justify-between transition-all"></div>
+
+        <!-- Account Overview & Actions -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Balance Card -->
+            <div class="md:col-span-2 bg-gradient-to-br from-slate-900 to-slate-850 p-6 rounded-2xl border border-slate-800 shadow-xl relative overflow-hidden">
+                <div class="absolute -right-10 -bottom-10 w-44 h-44 bg-blue-600/10 rounded-full blur-2xl"></div>
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <span class="text-xs uppercase font-bold text-slate-400 tracking-wider">Active Account</span>
+                        <div class="flex items-center gap-2 mt-1">
+                            <h2 id="activeAccNumber" class="text-xl font-mono font-bold text-white tracking-wide">ACC-XXXX</h2>
+                            <button onclick="copyAccNumber()" title="Copy Account Number" class="text-slate-400 hover:text-white text-xs">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <span id="accStatusBadge" class="px-2.5 py-1 text-xs rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-medium">ACTIVE</span>
+                </div>
+                <div class="mt-4">
+                    <div class="text-xs text-slate-400">Available Balance</div>
+                    <div class="flex items-baseline gap-2 mt-1">
+                        <span class="text-4xl font-extrabold text-white tracking-tight" id="activeAccBalance">0.00</span>
+                        <span class="text-sm font-semibold text-slate-400" id="activeAccCurrency">INR</span>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex flex-wrap gap-3">
+                    <button onclick="openModal('transferModal')" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition shadow-lg shadow-blue-600/30 flex items-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i> Send Money
+                    </button>
+                    <button onclick="openModal('depositModal')" class="px-4 py-2.5 rounded-xl bg-slate-850 hover:bg-slate-800 border border-slate-700 text-white font-semibold text-xs transition flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-down"></i> Deposit
+                    </button>
+                    <button onclick="openModal('withdrawModal')" class="px-4 py-2.5 rounded-xl bg-slate-850 hover:bg-slate-800 border border-slate-700 text-white font-semibold text-xs transition flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-up"></i> Withdraw
+                    </button>
+                </div>
+            </div>
+
+            <!-- Invariant Guarantee Card -->
+            <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 flex flex-col justify-between">
+                <div>
+                    <div class="text-xs uppercase font-bold text-slate-400 tracking-wider mb-2">Security Guarantees</div>
+                    <ul class="text-xs text-slate-300 space-y-2.5">
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-check-circle text-emerald-400 mt-0.5"></i>
+                            <span><strong>Conservation of Money:</strong> Debits strictly balance credits.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-check-circle text-emerald-400 mt-0.5"></i>
+                            <span><strong>No Negative Overdraft:</strong> Hard floor enforced by DB constraints.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-check-circle text-emerald-400 mt-0.5"></i>
+                            <span><strong>Idempotent Movement:</strong> Replayed requests never execute twice.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-check-circle text-emerald-400 mt-0.5"></i>
+                            <span><strong>Tamper-Proof Audit:</strong> Append-only SHA-256 hash chaining.</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-800 text-[11px] text-slate-500 font-mono">
+                    Ledger Engine v1.0 &bull; Serializable Concurrency
+                </div>
+            </div>
+        </div>
+
+        <!-- Per-Account Statement Section -->
+        <div class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
+            <div class="p-5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h3 class="text-base font-bold text-white flex items-center gap-2">
+                        <span>Account Statement & Audit Trail</span>
+                        <span id="entriesCount" class="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full border border-slate-700">0 entries</span>
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Every credit, debit, and refused attempt recorded with tamper-evident cryptographic hash</p>
+                </div>
+                <button onclick="loadStatement()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-300 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-rotate-right"></i> Refresh
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-950/50 text-slate-400 uppercase font-mono tracking-wider border-b border-slate-800">
+                        <tr>
+                            <th class="py-3 px-4">Timestamp</th>
+                            <th class="py-3 px-4">Reference</th>
+                            <th class="py-3 px-4">Type</th>
+                            <th class="py-3 px-4 text-right">Amount</th>
+                            <th class="py-3 px-4 text-right">Running Balance</th>
+                            <th class="py-3 px-4">Initiated By</th>
+                            <th class="py-3 px-4 font-mono">Hash Verification</th>
+                        </tr>
+                    </thead>
+                    <tbody id="statementTableBody" class="divide-y divide-slate-800/60 font-sans">
+                        <tr>
+                            <td colspan="7" class="py-8 text-center text-slate-500">Loading ledger statement...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Send Money Modal -->
+    <div id="transferModal" class="hidden fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-paper-plane text-blue-500"></i> Send Money (Transfer)
+                </h3>
+                <button onclick="closeModal('transferModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handleTransfer(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs uppercase font-semibold text-slate-400 mb-1">Destination Account Number</label>
+                    <input type="text" id="trfDestAcc" required placeholder="e.g. ACC-BOB-202" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-mono text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs uppercase font-semibold text-slate-400 mb-1">Amount (INR)</label>
+                    <input type="number" step="0.01" min="0.01" id="trfAmount" required placeholder="100.00" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm">
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="text-xs uppercase font-semibold text-slate-400">Idempotency Key</label>
+                        <button type="button" onclick="regenerateIdemKey('trfIdemKey')" class="text-xs text-blue-400 hover:underline">New UUID</button>
+                    </div>
+                    <input type="text" id="trfIdemKey" required class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-mono text-xs">
+                    <p class="text-[11px] text-slate-500 mt-1">Replaying with the same key returns the exact original result without deducting twice.</p>
+                </div>
+                <div>
+                    <label class="block text-xs uppercase font-semibold text-slate-400 mb-1">Description</label>
+                    <input type="text" id="trfDesc" placeholder="Payment for services" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('transferModal')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold">Cancel</button>
+                    <button type="submit" id="trfSubmitBtn" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold">Execute Transfer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Deposit Modal -->
+    <div id="depositModal" class="hidden fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-down text-emerald-500"></i> Deposit Funds
+                </h3>
+                <button onclick="closeModal('depositModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handleDeposit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs uppercase font-semibold text-slate-400 mb-1">Amount (INR)</label>
+                    <input type="number" step="0.01" min="0.01" id="depAmount" required placeholder="500.00" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm">
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="text-xs uppercase font-semibold text-slate-400">Idempotency Key</label>
+                        <button type="button" onclick="regenerateIdemKey('depIdemKey')" class="text-xs text-blue-400 hover:underline">New UUID</button>
+                    </div>
+                    <input type="text" id="depIdemKey" required class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-mono text-xs">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('depositModal')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold">Cancel</button>
+                    <button type="submit" id="depSubmitBtn" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold">Execute Deposit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Withdraw Modal -->
+    <div id="withdrawModal" class="hidden fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-up text-amber-500"></i> Withdraw Funds
+                </h3>
+                <button onclick="closeModal('withdrawModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handleWithdraw(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs uppercase font-semibold text-slate-400 mb-1">Amount (INR)</label>
+                    <input type="number" step="0.01" min="0.01" id="wthAmount" required placeholder="200.00" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm">
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="text-xs uppercase font-semibold text-slate-400">Idempotency Key</label>
+                        <button type="button" onclick="regenerateIdemKey('wthIdemKey')" class="text-xs text-blue-400 hover:underline">New UUID</button>
+                    </div>
+                    <input type="text" id="wthIdemKey" required class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-mono text-xs">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('withdrawModal')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold">Cancel</button>
+                    <button type="submit" id="wthSubmitBtn" class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold">Execute Withdrawal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let token = null;
+        let currentAccount = null;
+
+        function checkAuth() {
+            token = localStorage.getItem('ledger_token');
+            const u = localStorage.getItem('ledger_user');
+            if (!token || !u) {
+                window.location.href = '/login';
+                return false;
+            }
+            currentUser = JSON.parse(u);
+            document.getElementById('navUserName').textContent = currentUser.full_name;
+            document.getElementById('navUserRole').textContent = currentUser.role.toUpperCase();
+            return true;
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/login';
+        }
+
+        function showToast(msg, isError = false, isDuplicate = false) {
+            const el = document.getElementById('toast');
+            let bg = isError ? 'bg-rose-950/80 border-rose-500/40 text-rose-300' : 'bg-emerald-950/80 border-emerald-500/40 text-emerald-300';
+            if (isDuplicate) bg = 'bg-amber-950/80 border-amber-500/40 text-amber-300';
+            
+            el.className = `p-4 rounded-xl text-sm border flex items-center justify-between ${bg}`;
+            el.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid ${isError ? 'fa-triangle-exclamation' : (isDuplicate ? 'fa-clone' : 'fa-circle-check')}"></i>
+                    <span>${msg}</span>
+                </div>
+                <button onclick="this.parentElement.classList.add('hidden')" class="text-xs opacity-70 hover:opacity-100"><i class="fa-solid fa-xmark"></i></button>
+            `;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 8000);
+        }
+
+        function generateUUID() {
+            return 'key-' + 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        function regenerateIdemKey(id) {
+            document.getElementById(id).value = generateUUID();
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+            if (id === 'transferModal') regenerateIdemKey('trfIdemKey');
+            if (id === 'depositModal') regenerateIdemKey('depIdemKey');
+            if (id === 'withdrawModal') regenerateIdemKey('wthIdemKey');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function copyAccNumber() {
+            if (currentAccount) {
+                navigator.clipboard.writeText(currentAccount.account_number);
+                showToast(`Copied ${currentAccount.account_number} to clipboard!`);
+            }
+        }
+
+        async function loadAccountData() {
+            try {
+                const res = await fetch('/api/accounts', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Failed to load accounts');
+                const accounts = await res.json();
+                if (accounts.length > 0) {
+                    currentAccount = accounts[0];
+                    document.getElementById('activeAccNumber').textContent = currentAccount.account_number;
+                    document.getElementById('activeAccBalance').textContent = parseFloat(currentAccount.balance).toFixed(2);
+                    document.getElementById('activeAccCurrency').textContent = currentAccount.currency;
+                    document.getElementById('accStatusBadge').textContent = currentAccount.status;
+                    await loadStatement();
+                } else {
+                    document.getElementById('statementTableBody').innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-500">No account found.</td></tr>`;
+                }
+            } catch (err) {
+                showToast(err.message, true);
+            }
+        }
+
+        async function loadStatement() {
+            if (!currentAccount) return;
+            try {
+                const res = await fetch(`/api/accounts/${currentAccount.id}/statement`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Failed to load statement');
+                const data = await res.json();
+                
+                // Update balance in card as well
+                document.getElementById('activeAccBalance').textContent = parseFloat(data.current_balance).toFixed(2);
+                document.getElementById('entriesCount').textContent = `${data.statement_entries.length} entries`;
+
+                const tbody = document.getElementById('statementTableBody');
+                if (data.statement_entries.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-500">No transactions recorded yet.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = data.statement_entries.map(e => {
+                    const isCredit = e.entry_type === 'CREDIT';
+                    const isRefused = e.entry_type === 'REFUSED';
+                    const amountColor = isRefused ? 'text-rose-400 line-through' : (isCredit ? 'text-emerald-400' : 'text-slate-200');
+                    const badgeClass = isRefused 
+                        ? 'bg-rose-500/10 border border-rose-500/30 text-rose-400' 
+                        : (isCredit ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400' : 'bg-blue-500/10 border border-blue-500/30 text-blue-400');
+                    const sign = isRefused ? '✕' : (isCredit ? '+' : '-');
+                    const dateFormatted = new Date(e.created_at).toLocaleString();
+
+                    return `
+                        <tr class="hover:bg-slate-900/60 transition">
+                            <td class="py-3 px-4 text-slate-400 font-mono text-[11px]">${dateFormatted}</td>
+                            <td class="py-3 px-4 font-mono font-medium text-slate-300">${e.transaction_reference}</td>
+                            <td class="py-3 px-4">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide ${badgeClass}">
+                                    ${e.entry_type}
+                                </span>
+                                ${e.refusal_reason ? `<div class="text-[10px] text-rose-400 mt-0.5 font-mono">${e.refusal_reason}</div>` : ''}
+                            </td>
+                            <td class="py-3 px-4 text-right font-mono font-semibold ${amountColor}">
+                                ${sign} ${parseFloat(e.amount).toFixed(2)}
+                            </td>
+                            <td class="py-3 px-4 text-right font-mono text-slate-300">
+                                ${parseFloat(e.running_balance).toFixed(2)}
+                            </td>
+                            <td class="py-3 px-4 text-slate-400">
+                                ${e.initiated_by_name}
+                            </td>
+                            <td class="py-3 px-4 font-mono text-[11px] text-slate-400">
+                                <span title="Hash: ${e.entry_hash}" class="cursor-pointer hover:text-blue-400">
+                                    <i class="fa-solid fa-link text-blue-500 text-[10px]"></i> ${e.entry_hash.substring(0, 10)}...
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                showToast(err.message, true);
+            }
+        }
+
+        async function handleTransfer(e) {
+            e.preventDefault();
+            const btn = document.getElementById('trfSubmitBtn');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...`;
+
+            const dest = document.getElementById('trfDestAcc').value.trim();
+            const amount = parseFloat(document.getElementById('trfAmount').value);
+            const key = document.getElementById('trfIdemKey').value.trim();
+            const desc = document.getElementById('trfDesc').value.trim();
+
+            try {
+                const res = await fetch('/api/transactions/transfer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                        'Idempotency-Key': key
+                    },
+                    body: JSON.stringify({
+                        source_account_id: currentAccount.id,
+                        destination_account_number: dest,
+                        amount: amount,
+                        description: desc,
+                        idempotency_key: key
+                    })
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Transfer failed');
+
+                closeModal('transferModal');
+                if (data.is_duplicate) {
+                    showToast(`Idempotent Replay: Request was previously processed. Balance was not charged again! (Ref: ${data.reference})`, false, true);
+                } else {
+                    showToast(`Transfer of ₹${amount} to ${dest} succeeded! Ref: ${data.reference}`);
+                }
+                await loadAccountData();
+
+            } catch (err) {
+                showToast(err.message, true);
+                await loadStatement(); // refresh to show refused attempt if logged!
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Execute Transfer';
+            }
+        }
+
+        async function handleDeposit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('depSubmitBtn');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Depositing...`;
+
+            const amount = parseFloat(document.getElementById('depAmount').value);
+            const key = document.getElementById('depIdemKey').value.trim();
+
+            try {
+                const res = await fetch('/api/transactions/deposit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                        'Idempotency-Key': key
+                    },
+                    body: JSON.stringify({
+                        account_id: currentAccount.id,
+                        amount: amount,
+                        description: 'Deposit funds',
+                        idempotency_key: key
+                    })
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Deposit failed');
+
+                closeModal('depositModal');
+                if (data.is_duplicate) {
+                    showToast(`Idempotent Replay: Deposit previously completed. (Ref: ${data.reference})`, false, true);
+                } else {
+                    showToast(`Deposit of ₹${amount} completed! Ref: ${data.reference}`);
+                }
+                await loadAccountData();
+
+            } catch (err) {
+                showToast(err.message, true);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Execute Deposit';
+            }
+        }
+
+        async function handleWithdraw(e) {
+            e.preventDefault();
+            const btn = document.getElementById('wthSubmitBtn');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Withdrawing...`;
+
+            const amount = parseFloat(document.getElementById('wthAmount').value);
+            const key = document.getElementById('wthIdemKey').value.trim();
+
+            try {
+                const res = await fetch('/api/transactions/withdraw', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                        'Idempotency-Key': key
+                    },
+                    body: JSON.stringify({
+                        account_id: currentAccount.id,
+                        amount: amount,
+                        description: 'Withdraw funds',
+                        idempotency_key: key
+                    })
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Withdrawal failed');
+
+                closeModal('withdrawModal');
+                if (data.is_duplicate) {
+                    showToast(`Idempotent Replay: Withdrawal previously executed. Not debited again! (Ref: ${data.reference})`, false, true);
+                } else {
+                    showToast(`Withdrawal of ₹${amount} completed! Ref: ${data.reference}`);
+                }
+                await loadAccountData();
+
+            } catch (err) {
+                showToast(err.message, true);
+                await loadStatement(); // refresh to show refused attempt in statement
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Execute Withdrawal';
+            }
+        }
+
+        window.onload = () => {
+            if (checkAuth()) {
+                loadAccountData();
+            }
+        };
+    </script>
+</body>
+</html>

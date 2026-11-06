@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LedgerLine — Login & Identity</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 p-8">
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600/20 text-blue-400 rounded-2xl mb-4 border border-blue-500/30">
+                <i class="fa-solid fa-scale-balanced text-3xl"></i>
+            </div>
+            <h1 class="text-3xl font-extrabold tracking-tight text-white">LedgerLine</h1>
+            <p class="text-sm text-slate-400 mt-2">Money movement with a ledger you can prove</p>
+        </div>
+
+        <div id="alertBox" class="hidden mb-4 p-3 rounded-lg text-sm"></div>
+
+        <!-- Quick 1-Click Persona Logins -->
+        <div class="mb-6 bg-slate-900/60 p-4 rounded-xl border border-slate-700">
+            <div class="text-xs uppercase font-bold text-slate-400 tracking-wider mb-3">Quick Role Switcher</div>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+                <button onclick="quickLogin('alice', 'AlicePassword123!')" class="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-900/50 transition flex items-center justify-center gap-1.5 font-medium">
+                    <i class="fa-solid fa-user"></i> Alice (Holder)
+                </button>
+                <button onclick="quickLogin('bob', 'BobPassword123!')" class="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-900/50 transition flex items-center justify-center gap-1.5 font-medium">
+                    <i class="fa-solid fa-user"></i> Bob (Holder)
+                </button>
+                <button onclick="quickLogin('admin', 'AdminPassword123!')" class="p-2.5 rounded-lg bg-indigo-950/40 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-900/50 transition flex items-center justify-center gap-1.5 font-medium">
+                    <i class="fa-solid fa-shield-halved"></i> Admin
+                </button>
+                <button onclick="quickLogin('auditor', 'AuditorPassword123!')" class="p-2.5 rounded-lg bg-amber-950/40 border border-amber-500/30 text-amber-300 hover:bg-amber-900/50 transition flex items-center justify-center gap-1.5 font-medium">
+                    <i class="fa-solid fa-magnifying-glass"></i> Auditor
+                </button>
+            </div>
+        </div>
+
+        <!-- Login Form -->
+        <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold uppercase text-slate-300 mb-1">Username</label>
+                <input type="text" id="username" required class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-blue-500 transition text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold uppercase text-slate-300 mb-1">Password</label>
+                <input type="password" id="password" required class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-blue-500 transition text-sm">
+            </div>
+
+            <button type="submit" id="submitBtn" class="w-full mt-2 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 font-semibold text-white transition shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2">
+                <span>Sign In</span>
+                <i class="fa-solid fa-arrow-right text-xs"></i>
+            </button>
+        </form>
+
+        <div class="mt-6 text-center text-xs text-slate-500">
+            Immutable Double-Entry Ledger &bull; Strict Non-Negative Floor &bull; Idempotent API
+        </div>
+    </div>
+
+    <script>
+        function showAlert(msg, isError = true) {
+            const el = document.getElementById('alertBox');
+            el.className = `mb-4 p-3 rounded-lg text-sm ${isError ? 'bg-rose-950/60 border border-rose-500/30 text-rose-300' : 'bg-emerald-950/60 border border-emerald-500/30 text-emerald-300'}`;
+            el.textContent = msg;
+            el.classList.remove('hidden');
+        }
+
+        async function quickLogin(u, p) {
+            document.getElementById('username').value = u;
+            document.getElementById('password').value = p;
+            await doLogin(u, p);
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('username').value.trim();
+            const p = document.getElementById('password').value;
+            await doLogin(u, p);
+        }
+
+        async function doLogin(username, password) {
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Authenticating...`;
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.detail || 'Login failed');
+                }
+
+                localStorage.setItem('ledger_token', data.access_token);
+                localStorage.setItem('ledger_user', JSON.stringify(data));
+
+                showAlert(`Authenticated as ${data.full_name} (${data.role})`, false);
+
+                setTimeout(() => {
+                    if (data.role === 'admin') window.location.href = '/admin';
+                    else if (data.role === 'auditor') window.location.href = '/auditor';
+                    else window.location.href = '/dashboard';
+                }, 600);
+
+            } catch (err) {
+                showAlert(err.message, true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<span>Sign In</span> <i class="fa-solid fa-arrow-right text-xs"></i>`;
+            }
+        }
+    </script>
+</body>
+</html>

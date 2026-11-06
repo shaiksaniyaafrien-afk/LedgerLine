@@ -76,27 +76,27 @@ def index_page():
 
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="login.html")
 
 
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard_page(request: Request):
-    return templates.TemplateResponse("dashboard.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="dashboard.html")
 
 
 @app.get("/admin", response_class=HTMLResponse)
 def admin_page(request: Request):
-    return templates.TemplateResponse("admin.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="admin.html")
 
 
 @app.get("/auditor", response_class=HTMLResponse)
 def auditor_page(request: Request):
-    return templates.TemplateResponse("auditor.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="auditor.html")
 
 
 @app.get("/statement", response_class=HTMLResponse)
 def statement_page(request: Request):
-    return templates.TemplateResponse("statement.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="statement.html")
 
 
 # Health & Info Endpoints

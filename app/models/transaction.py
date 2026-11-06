@@ -56,3 +56,4 @@ class Transaction(Base):
     __table_args__ = (
         CheckConstraint("amount > 0", name="chk_transaction_amount_positive"),
     )
+

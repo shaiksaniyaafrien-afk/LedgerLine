@@ -51,3 +51,4 @@ class TamperProofReportResponse(BaseModel):
     total_entries_checked: int
     details: List[TamperVerificationEntry]
     checked_at: datetime
+

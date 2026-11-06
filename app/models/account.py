@@ -60,3 +60,4 @@ class Account(Base):
             name="chk_account_balance_non_negative",
         ),
     )
+

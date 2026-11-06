@@ -43,3 +43,4 @@ def test_account_isolation_in_listing(client, test_users):
     assert res_admin.status_code == 200
     admin_accs = res_admin.json()
     assert len(admin_accs) >= len(alice_accs)
+

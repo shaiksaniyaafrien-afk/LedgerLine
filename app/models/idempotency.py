@@ -48,3 +48,4 @@ class IdempotencyRecord(Base):
     )
 
     user = relationship("User")
+

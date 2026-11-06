@@ -76,3 +76,4 @@ def test_unauthenticated_requests_blocked(client, test_users):
         },
     )
     assert res.status_code == 401
+

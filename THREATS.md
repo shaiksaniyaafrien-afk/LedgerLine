@@ -70,3 +70,4 @@ The auditor endpoint `/api/audit/tamper-check` iterates across all accounts and 
 3. **In-Flight Idempotency Key Lock Timeout**:
    - *Risk*: If a worker process dies mid-transaction while an idempotency key is marked as `PROCESSING`, subsequent requests with that key could receive a `409 Conflict`.
    - *Mitigation*: Idempotency records track `created_at` and `updated_at`. If an in-flight key is older than 60 seconds without completion, the idempotency service permits re-acquiring the key.
+

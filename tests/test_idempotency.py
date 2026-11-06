@@ -83,3 +83,4 @@ def test_idempotency_key_payload_conflict_rejected(client, test_users):
     )
     assert res2.status_code == 422
     assert "collision" in res2.json()["detail"].lower()
+

@@ -32,3 +32,4 @@ class AccountBalanceResponse(BaseModel):
     balance: Decimal
     currency: str
     status: AccountStatus
+

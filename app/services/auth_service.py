@@ -190,3 +190,4 @@ class AuthService:
                 initial_deposit=Decimal("2500.0000"),
                 currency="INR",
             )
+

@@ -92,3 +92,4 @@ def verify_account_access_for_movement(user: User, account: Account) -> bool:
     if user.role == UserRole.ADMIN:
         return True
     return account.user_id == user.id
+

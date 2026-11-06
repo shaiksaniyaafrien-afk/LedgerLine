@@ -147,3 +147,4 @@ Use the **Quick Role Switcher** buttons to immediately test as Alice, Bob, Admin
 - **Multi-Currency Dynamic FX Conversion**: Left out to preserve exact mathematical invariant conservation without external exchange-rate volatility risks.
 - **Physical ATM / Card Integration**: Beyond the core integrity focus of LedgerLine.
 - **Autonomous AI-Driven Money Movement**: Explicitly excluded per project guidelines—AI should only flag anomalies, while humans authorize all money movements.
+

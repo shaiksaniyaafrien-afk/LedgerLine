@@ -74,3 +74,4 @@ def test_login_invalid_password_fails(client):
         json={"username": "login_user", "password": "WrongPassword!"},
     )
     assert res.status_code == 401
+

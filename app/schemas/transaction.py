@@ -75,3 +75,4 @@ class AccountStatementResponse(BaseModel):
     currency: str
     owner_name: str
     statement_entries: List[StatementEntryResponse]
+

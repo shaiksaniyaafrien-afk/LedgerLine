@@ -61,3 +61,4 @@ class LedgerEntry(Base):
     ) -> str:
         payload = f"{prev_hash}|{account_id}|{transaction_id}|{entry_type}|{amount:.4f}|{running_balance:.4f}|{created_at_iso}"
         return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+

@@ -79,3 +79,4 @@ def get_audit_logs(
             )
         )
     return result
+

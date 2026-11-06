@@ -28,3 +28,4 @@ class AuditService:
         # Note: Do not commit here if part of a larger unit of work;
         # but if called independently, it will be committed by the caller.
         return audit_entry
+

@@ -63,3 +63,4 @@ Once deployed, verify the system in your browser or with `curl`:
    ```
 3. **Web Portal**:
    Open `https://<your-render-url>.onrender.com/login` in an **incognito browser tab** to confirm it loads cleanly for judges without authentication prerequisites.
+

@@ -64,7 +64,14 @@ def get_audit_logs(
     # Populate usernames for response
     result = []
     for log in logs:
-        user_name = log.user.username if log.user else "System/Anonymous"
+        user_name = "System/Anonymous"
+        if log.user:
+            user_name = log.user.username
+        elif log.user_id:
+            found_user = db.query(User).filter(User.id == log.user_id).first()
+            if found_user:
+                user_name = found_user.username
+
         result.append(
             AuditLogResponse(
                 id=log.id,

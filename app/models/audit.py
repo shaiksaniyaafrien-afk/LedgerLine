@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
+from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 
@@ -21,3 +22,4 @@ class AuditLog(Base):
         index=True,
     )
 
+    user = relationship("User")
